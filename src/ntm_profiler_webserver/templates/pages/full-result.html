@@ -245,25 +245,30 @@
                             </tbody>
                         </table>
 
-
-
                     </div>
                     <div class="tab-pane fade" id="igv-tab-pane" role="tabpanel" aria-labelledby="igv-tab" tabindex="0">
-                        {{ macros.igv(reference['ref'],reference['gff'],results['id']) }}
-                        <!-- create a select button with the gene names -->
-                        <div class="form-group row pt-4">
-                            <div class="col-md-4">
-                                <h4>Mutation to visualise:</h4>
-                                <select class="form-select" id="gene_select">
-                                    {% for var in results["dr_variants"] %}
-                                        <option chromosome="{{var['chrom']}}" position="{{var['pos']}}" onclick="setPileupView(this)">{{ var['gene_name'] }} {{var['position']}}</option>
-                                    {% endfor %}
-                                    {% for var in results["other_variants"] %}
-                                        <option chromosome="{{var['chrom']}}" position="{{var['pos']}}" onclick="setPileupView(this)">{{ var['gene_name'] }} {{var['change']}}</option>
-                                    {% endfor %}
-                                </select>
+                        {% if 'bam' not in files %}
+                            <div class="alert alert-danger" role="alert">
+                                Genome viewer only available for fastq input
                             </div>
-                        </div>
+                        {% else %}
+                            
+                            {{ macros.igv(reference['ref'],reference['gff'],results['id']) }}
+                            <!-- create a select button with the gene names -->
+                            <div class="form-group row pt-4">
+                                <div class="col-md-4">
+                                    <h4>Mutation to visualise:</h4>
+                                    <select class="form-select" id="gene_select">
+                                        {% for var in results["dr_variants"] %}
+                                            <option chromosome="{{var['chrom']}}" position="{{var['pos']}}" onclick="setPileupView(this)">{{ var['gene_name'] }} {{var['change']}}</option>
+                                        {% endfor %}
+                                        {% for var in results["other_variants"] %}
+                                            <option chromosome="{{var['chrom']}}" position="{{var['pos']}}" onclick="setPileupView(this)">{{ var['gene_name'] }} {{var['change']}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="tab-pane fade" id="log-tab-pane" role="tabpanel" aria-labelledby="log-tab" tabindex="0">
                         <pre class="log_div"><code>

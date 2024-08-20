@@ -60,7 +60,9 @@
                         </table>
                     </div>
                     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
-                        <h2>Not available for <i>{{data['species']}}</i></h2>
+                        <div class="alert alert-danger" role="alert">
+                            Not available for <i>{{data['species']}}</i>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="log-tab-pane" role="tabpanel" aria-labelledby="log-tab" tabindex="0">
                         <pre class="log_div"><code>{{log_text|safe}}</code></pre>

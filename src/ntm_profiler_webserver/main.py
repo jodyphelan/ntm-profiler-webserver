@@ -252,9 +252,11 @@ def result_id(run_id):
             conf = pp.get_db('ntm-profiler',db_name)
             reference = get_reference_files(conf)
             data['drug_resistance_table'] = get_drug_table(results['dr_variants'],results['dr_genes'],conf)
-            files = {
-                'bam': "%s/%s.bam" % (app.config["RESULTS_DIR"], run_id)
-            }
+            files = {}
+            bam_filename = "%s/%s.bam" % (app.config["RESULTS_DIR"], run_id)
+            if os.path.isfile(bam_filename):
+                files['bam'] = bam_filename
+
             return render_template('pages/full-result.html', run_id=run_id, results=results, data = data, log_text=log_text,reference=reference,files=files)
 
 @bp.route('/result/<uuid:run_id>/download', methods=['GET', 'POST'])
