@@ -1,0 +1,285 @@
+{% import 'macros.html' as macros %}
+{% extends "base.html" %}
+{% block header %}
+
+{% endblock %}
+{% block content %}
+
+<div class="row justify-content-md-center">
+    <div class="col-md-10 p-4" >
+        <div class="card">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Summary</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="qc-tab" data-bs-toggle="tab" data-bs-target="#qc-tab-pane" type="button" role="tab" aria-controls="qc-tab-pane" aria-selected="false">QC</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="species-tab" data-bs-toggle="tab" data-bs-target="#species-tab-pane" type="button" role="tab" aria-controls="species-tab-pane" aria-selected="false">Species</button>
+              </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="clustering-tab" data-bs-toggle="tab" data-bs-target="#clustering-tab-pane" type="button" role="tab" aria-controls="clustering-tab-pane" aria-selected="false">Clustering</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-tab-pane" type="button" role="tab" aria-controls="contact-tab-pane" aria-selected="false">Drug resistance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="igv-tab" data-bs-toggle="tab" data-bs-target="#igv-tab-pane" type="button" role="tab" aria-controls="igv-tab-pane" aria-selected="false">Genome browser</button>
+              </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-tab-pane" type="button" role="tab" aria-controls="log-tab-pane" aria-selected="false">Log</button>
+            </li>
+        </ul>
+            <div class="card-body">
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                        <div>Run ID: {{ run_id }}</div>
+                        <div>Species: {{ data['species'] }}</div>
+                    </div>
+                    <div class="tab-pane fade" id="qc-tab-pane" role="tabpanel" aria-labelledby="qc-tab" tabindex="0">
+                        <!-- {{results['qc']}} -->
+                        {% if 'percent_reads_mapped' in results['qc'] %}
+                            <h4>Overview</h4>
+                            <div>Percent reads mapped: {{ results['qc']['percent_reads_mapped'] }}</div>
+                            <div>Number of reads mapped: {{ results['qc']['num_reads_mapped'] }}</div>
+                            <div>Median depth: {{ results['qc']['target_median_depth'] }}</div>
+                            <hr>
+                            <h4>Target-specific coverage</h4>
+                            <!-- create table for target, percent_depth_pass, median_depth  -->
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Target</th>
+                                        <th scope="col">Percent depth pass</th>
+                                        <th scope="col">Median depth</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for target in results['qc']['target_qc'] %}
+                                        <tr>
+                                            <td>{{ target['target'] }}</td>
+                                            <td>{{ target['percent_depth_pass'] }}</td>
+                                            <td>{{ target['median_depth'] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% else %}                    
+                            <div>Number of reads: {{ results['qc']['num_sequences'] }}</div>
+                            <div>Number of bases: {{ results['qc']['num_bases'] }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="species-tab-pane" role="tabpanel" aria-labelledby="species-tab" tabindex="0">
+                        <h4>Species found</h4>
+                        <!-- bootstrap table -->
+                        <table id="species_table" class="table" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Species</th>
+                                    <th>Closest DB match</th>
+                                    <th>ANI</th>
+                                    <th>Relative abundance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for species in results['species']['species'] %}
+                                    <tr>
+                                        <td>{{ species['species'] }}</td>
+                                        <td>{{ species['prediction_info']['accession'] }}</td>
+                                        <td>{{ species['prediction_info']['ani'] }}</td>
+                                        <td>{{ species['prediction_info']['relative_abundance'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade" id="clustering-tab-pane" role="tabpanel" aria-labelledby="clustering-tab" tabindex="0">
+                        <!-- {{ results['barcode'] }} -->
+                        <h4>Intra-species clustering</h4>
+                        {% if 'barcode' in results %}
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Cluster ID</th>
+                                        <th scope="col">Frequency</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for cluster in results['barcode'] %}
+                                    <tr>
+                                        <td>{{ cluster['id'] }}</td>
+                                        <td>{{ cluster['frequency'] }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endif %}
+                    </div>
+                    <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
+                        <h4>
+                            Overview
+                        </h4>
+                        <table class="table">
+                            <thead>
+                              <tr>
+                                <th scope="col">Drug</th>
+                                <th scope="col">Resistance</th>
+                                <th scope="col">Supporting variants</th>
+                              </tr>
+                              </thead>
+                            <tbody>
+                              {% for drug_row in data["drug_resistance_table"] %}
+                                  <tr>
+                                      {% if 'drug-rowspan' in drug_row %}
+                                          {% if drug_row['drug-rowspan']>1 %}
+                                              <td rowspan="2">{{ drug_row["drug"] }}</td>
+                                              {% else %}
+                                              <td>{{ drug_row["drug"] }}</td>
+                                          {% endif %}
+                                      {% endif %}
+                                      {% if 'gene-rowspan' in drug_row %}
+                                          {% if drug_row['gene-rowspan']>1 %}
+                                              <td rowspan="2">{{ drug_row["gene"] }}</td>
+                                          {% else %}
+                                              <td>{{ drug_row["gene"] }}</td>
+                                          {% endif %}
+                                      {% endif %}
+      
+                                      <td>{{ drug_row["change"] }}</td>
+                                  </tr>
+                              {% endfor %}
+                            </tbody>
+                        </table>
+                        <hr>
+                        <h5>
+                            Drug resistance genes
+                        </h5>
+
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Gene</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Drugs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for gene in results["dr_genes"] %}
+                                {% for d in gene["drugs"] %}
+                                    <tr>
+                                        {{ macros.row_val(gene["gene_name"],loop.index,gene["drugs"]|length) }}
+                                        {{ macros.row_val(gene["type"],loop.index,gene["drugs"]|length) }}
+                                        {{ macros.row_val(d['drug']) }}
+    
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <hr>
+                        <h5>
+                            Drug resistance variants
+                        </h5>
+                        
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Gene</th>
+                                    <th scope="col">Genome position</th>
+                                    <th scope="col">Mutation</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Estimated fraction</th>
+                                    <th scope="col">Drugs</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for var in results["dr_variants"] %}
+                                {% for d in var["drugs"] %}
+                                    <tr>
+                                        {{ macros.row_val(var["gene_name"],loop.index,var["drugs"]|length) }}
+                                        {{ macros.row_val(var["pos"],loop.index,var["drugs"]|length) }}
+                                        {{ macros.row_val(var["change"],loop.index,var["drugs"]|length)}}
+                                        {{ macros.row_val(var["type"],loop.index,var["drugs"]|length) }}
+                                        {{ macros.row_val(var["freq"]|round(2)|float,loop.index,var["drugs"]|length) }}
+                                        {{ macros.row_val(d['drug']) }}
+    
+                                    </tr>
+                                {% endfor %}
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+                        <hr>
+                        <h5>
+                            Other variants
+                        </h5>
+
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Gene</th>
+                                    <th scope="col">Genome position</th>
+                                    <th scope="col">Mutation</th>
+                                    <th scope="col">Type</th>
+                                    <th scope="col">Estimated fraction</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for var in results["other_variants"] %}
+
+                                    <tr>
+                                        
+                                        <td>{{ var["gene_name"] }}</td>
+                                        <td>{{ var["pos"] }}</td>
+                                        <td>{{ var["change"] }}</td>
+                                        <td>{{ var["type"] }}</td>
+                                        <td>{{ var["freq"] }}</td>
+    
+                                    </tr>
+
+                            {% endfor %}
+                            </tbody>
+                        </table>
+
+
+
+                    </div>
+                    <div class="tab-pane fade" id="igv-tab-pane" role="tabpanel" aria-labelledby="igv-tab" tabindex="0">
+                        {{ macros.igv(reference['ref'],reference['gff'],results['id']) }}
+                        <!-- create a select button with the gene names -->
+                        <div class="form-group row pt-4">
+                            <div class="col-md-4">
+                                <h4>Mutation to visualise:</h4>
+                                <select class="form-select" id="gene_select">
+                                    {% for var in results["dr_variants"] %}
+                                        <option chromosome="{{var['chrom']}}" position="{{var['pos']}}" onclick="setPileupView(this)">{{ var['gene_name'] }} {{var['position']}}</option>
+                                    {% endfor %}
+                                    {% for var in results["other_variants"] %}
+                                        <option chromosome="{{var['chrom']}}" position="{{var['pos']}}" onclick="setPileupView(this)">{{ var['gene_name'] }} {{var['change']}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane fade" id="log-tab-pane" role="tabpanel" aria-labelledby="log-tab" tabindex="0">
+                        <pre class="log_div"><code>
+
+                            {{log_text|safe}}
+                        </code></pre>
+                    </div>
+                  </div>
+            </div>
+        </div>
+        
+          
+          
+
+    </div>
+</div>
+
+
+{% endblock %}

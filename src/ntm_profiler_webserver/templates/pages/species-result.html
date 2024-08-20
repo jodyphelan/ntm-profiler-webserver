@@ -1,0 +1,79 @@
+{% import 'macros.html' as macros %}
+{% extends "base.html" %}
+{% block header %}
+
+{% endblock %}
+{% block content %}
+
+<div class="row justify-content-md-center">
+    <div class="col-md-10 p-4">
+        <div class="card">
+            <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-tab-pane" type="button" role="tab" aria-controls="home-tab-pane" aria-selected="true">Summary</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="qc-tab" data-bs-toggle="tab" data-bs-target="#qc-tab-pane" type="button" role="tab" aria-controls="qc-tab-pane" aria-selected="false">QC</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="species-tab" data-bs-toggle="tab" data-bs-target="#species-tab-pane" type="button" role="tab" aria-controls="species-tab-pane" aria-selected="false">Species</button>
+              </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-tab-pane" type="button" role="tab" aria-controls="contact-tab-pane" aria-selected="false">Drug resistance</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="log-tab" data-bs-toggle="tab" data-bs-target="#log-tab-pane" type="button" role="tab" aria-controls="log-tab-pane" aria-selected="false">Log</button>
+            </li>
+        </ul>
+            <div class="card-body">
+                <div class="tab-content" id="myTabContent">
+                    <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                        <div>Run ID: {{ run_id }}</div>
+                        <div>Species: {{ data['species'] }}</div>
+                    </div>
+                    <div class="tab-pane fade" id="qc-tab-pane" role="tabpanel" aria-labelledby="qc-tab" tabindex="0">
+                        <div>Number of reads: {{ results['qc']['num_sequences'] }}</div>
+                        <div>Number of bases: {{ results['qc']['num_bases'] }}</div>
+                    </div>
+                    <div class="tab-pane fade" id="species-tab-pane" role="tabpanel" aria-labelledby="species-tab" tabindex="0">
+                        
+                        <!-- bootstrap table -->
+                        <table id="species_table" class="table table-striped table-bordered" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th>Species</th>
+                                    <th>Closest DB match</th>
+                                    <th>ANI</th>
+                                    <th>Relative abundance</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for species in results['species']['species'] %}
+                                    <tr>
+                                        <td>{{ species['species'] }}</td>
+                                        <td>{{ species['prediction_info']['accession'] }}</td>
+                                        <td>{{ species['prediction_info']['ani'] }}</td>
+                                        <td>{{ species['prediction_info']['relative_abundance'] }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
+                        <h2>Not available for <i>{{data['species']}}</i></h2>
+                    </div>
+                    <div class="tab-pane fade" id="log-tab-pane" role="tabpanel" aria-labelledby="log-tab" tabindex="0">
+                        <pre class="log_div"><code>{{log_text|safe}}</code></pre>
+                    </div>
+                  </div>
+            </div>
+        </div>
+        
+          
+          
+
+    </div>
+</div>
+
+
+{% endblock %}

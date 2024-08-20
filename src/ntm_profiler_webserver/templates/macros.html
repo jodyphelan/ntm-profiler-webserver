@@ -1,0 +1,774 @@
+<head>
+    <style>
+        .fa-solid{
+            color: lightseagreen;
+            background-color: lightcoral;
+        }
+        .owl-stage, .owl-carousel, .owl-stage-outer {
+            width: 1px !important;
+        }
+       .item{
+        background-color: #4DC7A0;
+  color: white;
+  font-size: 30px;
+
+  padding: 10px;
+       }
+      
+
+
+
+    </style>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/assets/owl.theme.default.min.css" integrity="sha512-sMXtMNL1zRzolHYKEujM2AqCLUR9F2C4/05cdbxjjLSRvMQIciEPCQZo++nk7go3BtSuK9kfa/s+a4f4i5pLkw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+</head>
+
+
+{% macro igv(reference,gff,run_id) -%}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div id="igv-div"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://igv.org/web/release/2.0.0/dist/igv.min.js"></script>
+    <script>
+        var igvDiv = document.getElementById('igv-div');
+        var options = {
+            reference: {
+                id: 'Reference genome',
+                fastaURL: '{{ reference }}',
+            },
+            tracks: [
+                        {
+                            type: "alignment",
+                            format: "bam",
+                            name: "{{ run_id }}",
+                            url: "{{ url_for('static', filename='results/') + run_id}}.bam",
+                            indexURL: "{{ url_for('static', filename='results/') + run_id}}.bam.bai",
+                        },
+                        {
+                            type: "annotation",
+                            searchable: true,
+                            format: "gff3",
+                            name: "Genes",
+                            url: "{{ gff }}",
+                            displayMode: "EXPANDED"
+                        }
+                    ]
+            
+        };
+        var igvBrowser = igv.createBrowser(igvDiv, options)
+            .then(function (browser) {
+                window.setPileupView = function(objButton){
+                    chrom = objButton.getAttribute("chromosome")
+                    pos = Number(objButton.getAttribute("position"))
+                    browser.search(chrom+":"+(pos-10)+"-"+(pos+10))
+                }
+            })
+    </script>
+
+{%- endmacro %}
+
+<!-- {% macro fastq_uploader() -%}
+
+    <div class="card border-dark">
+        <div class="card-header bg-dark text-white text-center">
+            FASTQ input
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+                
+            </p>
+            <form method="post" enctype=multipart/form-data>
+                <div class="form-group pt-2">
+                    <label for="file1"><b>FASTQ file 1:</b></label>
+                    <input type="file" name="file1" class="form-control-file" id="file1">
+                    <hr>
+                    <label for="file2"><b>FASTQ file 2:</b></label>
+                    <input type="file" name="file2" class="form-control-file" id="file2">
+                </div>
+                <hr>
+                <div class="justify-content-center text-center">
+                    <button type="submit" class="btn btn-success btn-lg" name="fastq_submit" id="fastq_submit" onclick="$('#loading').show();">Submit</button>
+                </div>
+            </form>
+        </div>https://github.com/jodyphelan/jodyphelan.github.io
+    </div>
+
+{%- endmacro %}
+
+{% macro bam_uploader() -%}
+
+    <div class="card border-dark">
+        <div class="card-header bg-dark text-white text-center">
+            BAM input
+        </div>
+        <div class="card-body">
+            <p class="card-text">
+   
+            </p>
+            <form method="post" enctype=multipart/form-data>
+                <div class="form-group pt-2">
+                    <label for="bam"><b>Upload file:</b></label>
+                    <input type="file" name="bam" class="form-control-file" id="bam">
+                </div>
+                <hr>
+                <div class="justify-content-center text-center">
+                    <button type="submit" class="btn btn-success btn-lg" name="bam_submit" id="bam_submit">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+{%- endmacro %} -->
+
+{% macro file_dropper(random_id,species) -%}
+
+    <div class="drop-section">
+        
+        <div class="body">
+            <p class="text">
+                Please drop your files in here and click submit when done.
+                
+            </p>
+            <form method="POST" action='{{ url_for("main.file_upload",upload_id=random_id) }}' class="dropzone dz-clickable" 
+                id="dropper" enctype="multipart/form-data">
+                <div class="dz-message" data-dz-message> <i class="fa fa-upload fa-6x" aria-hidden="true"></i></div>
+               
+            </form>
+            <form method="post">
+                <div class="row   pt-4">
+                    <div class="col-md-6">
+                        <div><h5>Platform:</h5></div>
+                        <div class="form-check" >
+                            <input class="form-check-input" type="radio" name="radio_platform" id="radiobtn_illumina" value="illumina" checked>
+                            <label class="form-check-label" for="radiobtn_illumina">Illumina</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="radio_platform" id="radiobtn_nanopore" value="nanopore">
+                            <label class="form-check-label" for="radiobtn_nanopore">Nanopore</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div><h5>Filetype:</h5></div>
+                        <div class="form-check" >
+                            <input class="form-check-input" type="radio" name="radio_filetype" id="radiobtn_filetype" value="paired" checked data-bs-toggle="collapse" href="#paried_fastq_options_collapse">
+                            <label class="form-check-label" for="radiobtn_filetype">Paired fastq</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="radio_filetype" id="radiobtn_filetype" value="single" data-bs-toggle="collapse" href="#single_fastq_options_collapse">
+                            <label class="form-check-label" for="radiobtn_filetype">Single fastq</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="radio_filetype" id="radiobtn_filetype" value="fasta" data-bs-toggle="collapse" href="#fasta_options_collapse">
+                            <label class="form-check-label" for="radiobtn_filetype">Fasta</label>
+                        </div>
+                        
+                    </div>
+                </div>
+
+
+                <div class="collapse pt-4" id="paried_fastq_options_collapse">
+                    <h5>File suffix:</h5>
+                    <div class="mb-2">
+                        Read suffix. Use this option to change the default suffix of files.
+                        For example if your fastq file is named <b>sample1_R1.fastq.gz</b>	 then your
+                        suffix should be <b>_R1.fastq.gz</b>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div>Forward file suffix:</div>
+                            <div><input type="text" name="forward-suffix" id="forward-suffix-input" placeholder="_1.fastq.gz"></div>
+                        </div>
+                        <div class="col-md-6">
+                            <div>Reverse file suffix:</div>
+                            <div><input type="text" name="reverse-suffix" id="reverse-suffix-input" placeholder="_2.fastq.gz"></div>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr> 
+                <div class="pt-2 justify-content-center text-center">
+                    <button type="submit" class="btn btn-outline-success btn-lg" name="submit_button" value="{{random_id}}" id="submit">SUBMIT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.7.1/min/dropzone.min.js"></script>
+
+    <script type="application/javascript">
+        Dropzone.options.dropper = {
+            paramName: 'file',
+            chunking: true,
+            forceChunking: true,
+            url: '{{ url_for("main.file_upload", upload_id=random_id) }}',
+            maxFilesize: 4025, // megabytes
+            chunkSize: 100000000, // bytes
+            timeout: 0,
+            renameFile: function(file) {
+			var safefilename = file.name.replace(/[^\w.]/gi, '')
+			return safefilename;
+            },
+            init: function() {
+                this.on("processing", file => {
+                    document.getElementById('submit').classList.add("disabled");
+                });
+                this.on("success", file => {
+                    document.getElementById('submit').classList.remove("disabled");
+                });
+            },
+        }	
+    </script>
+
+    <script>
+        $(document).ready(function(){
+            // if the platform is nanopore, disable the paired fastq option. Include a check at the start to see if nanopore is selected
+            
+            if ($('input[name="radio_platform"]:checked').val() == 'nanopore'){
+                $('input[name="radio_filetype"][value="paired"]').prop('disabled', true);
+                $('input[name="radio_filetype"][value="single"]').prop('checked', true);
+            }
+            
+            $('input[name="radio_platform"]').change(function(){
+                if($(this).val() == 'nanopore'){
+                    $('input[name="radio_filetype"][value="paired"]').prop('disabled', true);
+                    $('input[name="radio_filetype"][value="single"]').prop('checked', true);
+                }else{
+                    $('input[name="radio_filetype"][value="paired"]').prop('disabled', false);
+                }
+            });
+
+
+
+            // if the file type is paired fastq, show the suffix options. Otherwise hide them. Include a check at the start to see if paired is selected.
+            if($('input[name="radio_filetype"]:checked').val() == 'paired'){
+                $('#paried_fastq_options_collapse').collapse('show');
+            }
+            $('input[name="radio_filetype"]').change(function(){
+                if($(this).val() == 'paired'){
+                    $('#paried_fastq_options_collapse').collapse('show');
+                }else{
+                    $('#paried_fastq_options_collapse').collapse('hide');
+                }
+            });
+        });
+    </script>
+
+{%- endmacro %}
+
+
+{% macro row_val(val,i=0,total_rows=1) -%}
+	{% if total_rows==1 %}
+        <td>{{val}}</td>
+	{% else %}
+		{% if i==1 %}	
+            <td rowspan="{{total_rows}}">{{val}}</td>
+		{% else %}
+            jiaojoiajij
+		{% endif %}
+	{% endif %}
+{%- endmacro %}
+
+
+{% macro result_retriever() -%}
+<main style="margin-top: 10%;">
+    <div class="header">
+        <h1 class="header">
+            Get results
+        </h1>
+        <div class="text-align">
+            <div class="row justify-content-center">
+                <p class="justify-content-center">
+                    Find your results by entering your unique <b>Result ID</b> into
+                    the search box below.
+                </p>
+            </div>
+            <form method="post" enctype=multipart/form-data>
+                <div class="row justify-content-center text-center">                
+                    <div class=" tags-input">
+                        <input type="text" name="result_id" class="form-control no-border shadow-none"  placeholder="Result ID">
+                    </div>
+                </div>
+                <hr>
+                <div class="justify-content-center text-center">
+                    <button type="submit" id="result_submit" name="result_submit", class="btn btn-outline-success btn-lg">SUBMIT</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</main>
+{%- endmacro %}
+
+{% macro description() -%}
+
+
+{%- endmacro %}
+
+{% macro resistanceTable1(rows, columns, name, genus) -%}
+{% set rand_id = range(1, 5000) | random %}
+<div class="rtablerr" style="height: inherit;">
+    {% set ns = namespace(current_var='') %}
+    {% set gene_var_dict = {} %}
+    {% set ns2 = namespace(current_gene = "") %}
+    {% for row in rows %}
+        {% for key in columns %}
+            {% if key == "gene" %}
+                {% set ns2.current_gene = row[key] %}
+            {% endif %}
+            {% if key == "change" %}
+                {% set ns.current_var = row[key] %}
+            {% endif %}
+        {% endfor %}
+        {% if ns2.current_gene not in gene_var_dict %}
+            {% set gene_var_dict = gene_var_dict.update({(ns2.current_gene):[ns.current_var]}) %}
+           
+        {% else %}
+        {% set vars_list = gene_var_dict[ns2.current_gene] %}
+{% set vars_list = vars_list + [ns.current_var] %}
+{% set gene_var_dict = gene_var_dict.update({ns2.current_gene:vars_list}) %}
+
+                 {% endif %}
+    {% endfor %}
+
+   
+        
+    <div class="card-body">
+        <div class="card-header text-center">
+            <p style="font-family: 'Sofia Sans' sans-serif; color: black;">{{name}}</p>
+        </div>
+        <table class="table table-hover" id="table-{{rand_id}}">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 10%">Gene</th>    
+                    <th scope="col" style="width: 30%">Mutations</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable">
+                {% for key, values in gene_var_dict.items() %}
+                {% set my_counter = loop.index %}
+                    <tr>
+                        <td>
+                            {{key | safe}} 
+                            {% set keyz = key|string %}
+                        </td>
+                        <td>
+                            <button type="button" id="dropdownMenu{{loop.index+1000}}" class="btn btn-outline-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false" >
+                                SELECT MUTATION
+                              </button>
+                              <div class="dropdown-menu rr" aria-labelledby="dropdownMenu{{loop.index+1000}}">
+                                  {% for value in values %}
+                                  <div  class="dropdown-item rr" onclick="showGene(this,{{my_counter+1000}})" data-value={{ value }}>
+                                    {{ value }}
+                                    
+                                </div>
+                                {% endfor %}
+                              </div>
+                            
+                            <a  class="btn btn-outline-success"onclick="showGene2({{loop.index+1000}},'#rvr-data','{{genus}}')" data-keyz="{{keyz}}" >VIEW IN IGV</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+            </tbody>
+            
+
+
+        </table>
+    </div>
+</div>
+
+{%- endmacro %}
+
+
+{% macro resistanceTable2 (rows, columns, name, genus) -%}
+{% set rand_id = range(1, 5000) | random %}
+<div class="rtableov" style="height: inherit;">
+    {% set ns = namespace(current_var='') %}
+    {% set gene_var_dict = {} %}
+    {% set ns2 = namespace(current_gene = "") %}
+    {% for row in rows %}
+        {% for key in columns %}
+            {% if key == "gene" %}
+                {% set ns2.current_gene = row[key] %}
+            {% endif %}
+            {% if key == "change" %}
+                {% set ns.current_var = row[key] %}
+            {% endif %}
+        {% endfor %}
+        {% if ns2.current_gene not in gene_var_dict %}
+            {% set gene_var_dict = gene_var_dict.update({(ns2.current_gene):[ns.current_var]}) %}
+           
+        {% else %}
+        {% set vars_list = gene_var_dict[ns2.current_gene] %}
+{% set vars_list = vars_list + [ns.current_var] %}
+{% set gene_var_dict = gene_var_dict.update({ns2.current_gene:vars_list}) %}
+
+                 {% endif %}
+    {% endfor %}
+
+   
+        
+    <div class="card-body">
+        <div class="card-header text-center">
+            <p style="font-family: 'Sofia Sans' sans-serif;">{{name}}</p>
+        </div>
+        <table class="table table-hover" id="table-{{rand_id}}">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 10%">Gene</th>    
+                    <th scope="col" style="width: 30%">Mutations</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable">
+                {% for key, values in gene_var_dict.items() %}
+                {% set my_counter = loop.index %}
+                    <tr>
+                        <td>
+                            {{key | safe}} 
+                            {% set keyz = key|string %}
+                        </td>
+                        <td>
+                            <button type="button" id="dropdownMenu{{loop.index+2000}}" class="btn btn-outline-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false" >
+                                SELECT MUTATION
+                              </button>
+                              <div class="dropdown-menu ov" aria-labelledby="dropdownMenu2{{loop.index+2000}}">
+                                  {% for value in values %}
+                                  <div  class="dropdown-item ov" onclick="showGene(this,{{my_counter+2000}})" data-value={{ value }}>
+                                    {{ value }}
+                                    
+                                </div>
+                                {% endfor %}
+                              </div>
+                              <a  class="btn btn-outline-success"onclick="showGene2({{loop.index+2000}},'#other-data', '{{genus}}')" data-keyz="{{keyz}}" >VIEW IN IGV</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+            </tbody>
+            
+
+
+        </table>
+    </div>
+</div>
+
+{%- endmacro %}
+
+
+{% macro resistanceTable3(rows, columns, name, genus) -%}
+
+{% set rand_id = range(1, 5000) | random %}
+<div class="rtablemp" style="height: inherit;">
+    {% set ns = namespace(current_var='') %}
+    {% set gene_var_dict = {} %}
+    {% set ns2 = namespace(current_gene = "") %}
+    {% for row in rows %}
+        {% for key in columns %}
+            {% if key == "gene" %}
+                {% set ns2.current_gene = row[key] %}
+            {% endif %}
+            {% if key == "variants" %}
+                {% set ns.current_var = row[key] %}
+            {% endif %}
+        {% endfor %}
+        {% if ns2.current_gene not in gene_var_dict %}
+            {% set gene_var_dict = gene_var_dict.update({(ns2.current_gene):[ns.current_var]}) %}
+           
+        {% else %}
+        {% set vars_list = gene_var_dict[ns2.current_gene] %}
+{% set vars_list = vars_list + [ns.current_var] %}
+{% set gene_var_dict = gene_var_dict.update({ns2.current_gene:vars_list}) %}
+
+                 {% endif %}
+    {% endfor %}
+
+   
+        
+    <div class="card-body">
+        <div class="card-header text-center">
+            <p style="font-family: 'Sofia Sans' sans-serif;">{{name}}</p>
+        </div>
+        <table class="table table-hover" id="table-{{rand_id}}">
+            <thead>
+                <tr>
+                    <th scope="col" style="width: 10%">Gene</th>    
+                    <th scope="col" style="width: 30%">Mutations</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTable">
+                {% for key, values in gene_var_dict.items() %}
+                {% set my_counter = loop.index %}
+                    <tr>
+                        <td>
+                            {{key | safe}} 
+                            {% set keyz = key|string %}
+                        </td>
+                        <td>
+                            <button type="button" id="dropdownMenu{{loop.index+3000}}" class="btn btn-outline-success dropdown-toggle" data-toggle="dropdown" aria-expanded="false" >
+                                SELECT MUTATION
+                              </button>
+                              <div class="dropdown-menu mp" aria-labelledby="dropdownMenu{{loop.index+3000}}">
+                                  {% for value in values %}
+                                  <div  class="dropdown-item mp" onclick="showGene(this,{{my_counter+3000}})" data-value={{ value }}>
+                                    {{ value }}
+                                    
+                                </div>
+                                {% endfor %}
+                              </div>
+                              <a  class="btn btn-outline-success"onclick="showGene2({{loop.index+3000}},'#miss-data', '{{genus}}')" data-keyz="{{keyz}}" >VIEW IN IGV</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+            </tbody>
+            
+
+
+        </table>
+    </div>
+</div>
+
+{%- endmacro %}
+
+
+{% macro generic_table(rows, columns, name,buttons=False) -%}
+<div class="generic_table">
+    {% set rand_id = range(1, 5000) | random %}
+    <div class="card shadow">
+        <div class="card-header text-center ">
+            {{name}}
+            {% if name == "Resistance report" %}
+            <abbr title="Table indicating areas of resistance and what drug is affected"><i class="fa-solid fa-question" title=""></i></abbr>
+            {% endif %}
+            {% if name == "Other variants" %}
+            <abbr title="Table indicating areas where other changes occured not to do with drug resistance"><i class="fa-solid fa-question" title=""></i></abbr>
+            {% endif %}
+            {% if name == "Missing positions report" %}
+            <abbr title="Table indicating positions missing from the genome"><i class="fa-solid fa-question" title=""></i></abbr>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <table class="table table-hover" id="table-{{rand_id}}">
+                <thead>
+                    <tr>
+                        {% for key in columns %}
+                        {% if key != 'Genotypic Resistance' %}
+                            <th scope="col" style="width: 10%">{{ columns[key] }}</th>
+                            {% endif %}
+                            {% endfor %}
+                    </tr>
+                </thead>
+                <tbody id="resultsTable">
+                    {% for row in rows %}
+                        <tr>
+                        {% for key in columns %}
+                        {% if key != 'Genotypic Resistance' %}
+                            <td>
+                                {{ row[key]|safe }}
+                            </td>
+                            {% endif %}
+                        {% endfor %}
+                        </tr>
+                        
+                    {% endfor %}                
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% if buttons %}
+<script type="text/javascript">
+	var table = $("#table-{{rand_id}}").DataTable( {
+		"aaSorting": [[1,'desc']],
+		select: true,
+		"scrollX": true,
+
+		dom: 'Bfrtip',
+        buttons: [
+            'csv', 'pdf'
+        ]
+
+	})
+</script>
+{% endif %}
+{%- endmacro %}
+
+
+{% macro get_results(rows, columns, name) -%}
+<div class="container">
+    
+    {% for row in rows %}
+    
+    {% for key in columns %}
+    <div class="font_awesome d-flex  align-items-center justify-content-center"  >
+        {% if row[key] == 'falciparum' %}
+        <i class="fa-solid fa-p fa-6x"></i>
+        <i class="fa-solid fa-f fa-3x"></i>
+        {% elif row[key] == 'ovale' %}
+        <i class="fa-solid fa-p fa-6x"></i>
+        <i class="fa-solid fa-o fa-3x"></i>
+        {% elif row[key] == 'vivax_simium' %}
+        <i class="fa-solid fa-p fa-6x"></i>
+        <i class="fa-solid fa-v fa-3x"></i>
+        {% elif row[key] == 'knowlesi' %}
+        <i class="fa-solid fa-p fa-6x"></i>
+        <i class="fa-solid fa-k fa-3x"></i>
+        {% elif row[key] == 'malariae' %}
+        <i class="fa-solid fa-p fa-6x"></i>
+        <i class="fa-solid fa-m fa-3x"></i>
+        
+        
+        {% else %}
+        
+        
+                {% endif %}
+                
+    </div>
+    <div class="text d-flex  align-items-center justify-content-center">
+        {% if row[key] == 'falciparum' %}
+        <p><em>Plasmodium {{row[key]}}</em></p>
+        {% elif row[key] == 'ovale' %}
+        <p><em>Plasmodium {{row[key]}}</em></p>
+        {% elif row[key] == 'vivax_simium' %}
+        <p><em>Plasmodium {{row[key]}}</em></p>
+        {% elif row[key] == 'knowlesi' %}
+        <p><em><em>Plasmodium {{row[key]}}</em></em></p>
+        {% elif row[key] == 'malariae' %}
+        <p><em><em>Plasmodium {{row[key]}}</em></em></p>
+        
+        {% else %}
+        
+        
+                {% endif %}
+    </div>
+        {% endfor %}
+    {% endfor %}
+
+    <table class="table table-hover" id="table-{{rand_id}}">
+        <thead>
+            <tr>
+                {% for key in columns %}
+                
+                {% if columns[key] != "Species" %}
+                    
+                    <th scope="col" >{{ columns[key] }}</th>
+                    {% endif %}
+                    {% endfor %}
+            </tr>
+        </thead>
+        <tbody id="resultsTable">
+            {% for row in rows %}
+                <tr>
+                {% for key in columns %}
+                {% if row[key] not in ['vivax_simium', 'falciparum', 'malariae', 'knowlesi', 'ovale'] %}
+                    <td>
+                        {{ row[key]|safe }}
+                    </td>
+                    {% endif %}
+                {% endfor %}
+                </tr>
+            {% endfor %}                
+        </tbody>
+    </table>
+                  
+
+</div>
+{%- endmacro %}
+
+
+{% macro get_results2(rows, columns, name) -%}
+<div class="contasiner">
+ {% for row in rows %}
+  {% for key in columns %}
+      {% if not '-' in row[key] %}
+      <p style="">{{ row[key] }}</p>
+         
+     {% else %} 
+    
+    {% endif %}      
+    {% endfor %}
+
+{% endfor %}                
+
+</div>
+{%- endmacro %}
+
+{% macro get_analysis(rows, columns, name) -%}
+<div class="coverage">
+<div class="owl-carousel">{% set values = [] %}
+    {% for row in rows %}
+                    {% for key in columns %}
+                    {{values.append(row[key]) or ""}}
+                    {% if loop.index0 == 3 %}
+    <div class="item">
+
+        <table class="table table-hover" id="table-{{rand_id}}">
+                <thead>
+                <tr>
+                    <th scope="col" style="width: 10%;">Gene</th>   
+                    <th scope="col" style="width: 10%;">Locus Tag</th>   
+                    <th scope="col" style="width: 10%;">Cutoff</th>   
+                    <th scope="col" style="width: 10%;">Fraction</th>   
+                </tr>
+            </thead>
+                
+                    
+            <tbody id="resultsTable">
+                    
+                <tr>
+                    <td class="col-md-2" >
+                        {{ values[0]}}
+                    </td>
+                    <td class="col-md-2">
+                        {{ values[1]}}
+                    </td class="col-md-2">
+                    <td>
+                    {{ values[2]}}
+                    </td >
+                    <td class="col-md-2">
+                    {{ values[3]}}
+                    </td>
+                </tr>
+                   
+                    {{values.clear() or ""}}
+                   
+                    
+        
+        
+                </tbody>
+            </table>
+            
+        </div>
+        {% endif %}
+        {% endfor %}    
+                {% endfor %}
+       
+            
+      </div>
+     
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/OwlCarousel2/2.3.4/owl.carousel.js"></script>
+
+
+    <script>
+       $(document).ready(function() {
+        $(".owl-carousel").owlCarousel({
+            loop:true,
+            autoplay:true,
+    autoplayTimeout:2000,
+    autoplayHoverPause:true, 
+            margin:10,
+            dots:true,
+            
+            items: 1,
+            singleItem:true,
+            
+                   });
+                });
+
+    </script>
+{%- endmacro %}
+
+</div>   
