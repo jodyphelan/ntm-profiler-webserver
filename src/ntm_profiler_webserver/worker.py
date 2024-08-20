@@ -32,10 +32,8 @@ def run_task(
         threads: int = 1
     ):
     # log to file
-    log_fh = open(f"{results_dir}/{run_id}.log")
 
     print(f"Writing log to: {results_dir}/{run_id}.log")
-
 
     print(filetype)
     if filetype=='fasta':
@@ -56,31 +54,5 @@ def run_task(
         sp.call(f"mv {results_dir}/{run_id}.bed.bam {results_dir}/{run_id}.bam", shell=True)
         sp.call(f"samtools index {results_dir}/{run_id}.bam", shell=True)
 
-    
-
-@shared_task
-def remote_profile(ftype, files, run_id, results_dir, platform, species, threads = 1):
-    tmp_dir = f"/tmp/runs/"
-    conf = {
-        "run_id": run_id,
-        "ftype": ftype,
-        "platform": platform,
-        "files": files,
-        "species": species
-    }
-    run_file = f"{tmp_dir}/{run_id}.run_file.json"
-    json.dump(conf,open(run_file,"w"))
-    server_result_file = f"{tmp_dir}/{run_id}.completed.json"
-    while True:
-        time.sleep(1)
-        if os.path.exists(server_result_file):
-            break
-    server_result = json.load(open(server_result_file,"r"))
-    print(server_result)
-    for val in server_result.values():
-        local_file_name = val.split("/")[-1]
-        shutil.copyfile(f"{tmp_dir}/{local_file_name}",f"{results_dir}/{local_file_name}" )
-        os.remove(f"{tmp_dir}/{local_file_name}")
-    sp.call(f"samtools index {results_dir}/{run_id}.bam", shell=True)
-    os.remove(server_result_file)
-    os.remove(run_file)
+    with open(f"{results_dir}/{run_id}.log","a") as LOG:
+        LOG.write("\nDONE\n")

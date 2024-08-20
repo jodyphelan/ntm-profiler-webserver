@@ -33,9 +33,29 @@ def upload():
     if request.method == "POST":
         platform = request.form["radio_platform"]
         filetype = request.form['radio_filetype']
-        forward_regex = "(.+)"+request.form['forward-suffix'] if request.form['forward-suffix']!="" else '(.+)_1.fastq.gz'
-        reverse_regex = "(.+)"+request.form['reverse-suffix'] if request.form['reverse-suffix']!="" else '(.+)_2.fastq.gz'
-
+        if filetype=='paired':
+            if request.form['forward-suffix']=="":
+                file1_regex = '(.+)_1.fastq.gz'
+            else:
+                file1_regex = '(.+)'+request.form['forward-suffix']
+            if request.form['reverse-suffix']=="":
+                file2_regex = '(.+)_2.fastq.gz'
+            else:
+                file2_regex = '(.+)'+request.form['reverse-suffix']
+        elif filetype=='single':
+            if request.form['single-suffix']=="":
+                file1_regex = '(.+).fastq.gz'
+            else:
+                file1_regex = '(.+)'+request.form['single-suffix']
+            file2_regex = None
+        elif filetype=='fasta':
+            if request.form['fasta-suffix']=="":
+                file1_regex = '(.+).fasta'
+            else:
+                file1_regex = '(.+)'+request.form['fasta-suffix']
+            file2_regex = None
+        print(file1_regex)
+        print(file2_regex)
         print(filetype)
         print(request.form)
         runs = []
@@ -52,11 +72,11 @@ def upload():
         files = glob(f'{new_upload_dir}/*')
         print(files)
         if filetype=='paired':
-            samples = get_paired_fastq_samples(files,r1_suffix=forward_regex,r2_suffix=reverse_regex)
+            samples = get_paired_fastq_samples(files,r1_suffix=file1_regex,r2_suffix=file2_regex)
         elif filetype=='single':
-            samples = get_single_fastq_samples(files,r1_suffix='(.+).fastq.gz')
+            samples = get_single_fastq_samples(files,r1_suffix=file1_regex)
         elif filetype=='fasta':
-            samples = get_single_fasta_samples(files,fasta_suffix='(.+).fasta')
+            samples = get_single_fasta_samples(files,fasta_suffix=file1_regex)
         print(samples)
         if len(samples)==0:
             flash("No valid files found. Check and see if your file suffix is correct.","danger")
@@ -101,6 +121,7 @@ def upload_runs_id(analysis_id):
     for d in data:
         d["link"] = '<a href="' + url_for("main.result_id", run_id=d["id"]) + '">' + d["id"] + '</a>'
         d["files"] = ", ".join([x.split("/")[-1] for x in d["files"]])
+        d["status"] = get_status(d["id"])
     return render_template('/pages/analysis_id.html', runs = data)
 
 def get_filetype(filename):
@@ -167,6 +188,16 @@ def parse_result_summary(json_file):
 def add_linebreaks(text):
     # make each line a new div
     return "<div>"+"</div><div>".join(text.split("\n")) + "</div>"
+
+def get_status(run_id):
+    log_file = "%s/%s.log" % (app.config["RESULTS_DIR"], run_id)
+    text = open(log_file).read()
+    if "DONE" in text:
+        return "DONE"
+    elif "sing variables file" in text:
+        return "PROCESSING"
+    else:
+        return "QUEUED"
 
 def get_drug_table(dr_variants,dr_genes,conf=None,drugs=None):
     all_drugs = conf['drugs']

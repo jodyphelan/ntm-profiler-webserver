@@ -195,6 +195,9 @@ def get_single_fasta_samples(files: List[str], fasta_suffix: str) -> List[FastqS
     """
     prefixes = defaultdict(list)
 
+    print("Looking for files with suffix %s in:" % fasta_suffix)
+    print(files)
+
     for f in files:
         tmp = re.search("%s" % fasta_suffix,f)
         p = None
