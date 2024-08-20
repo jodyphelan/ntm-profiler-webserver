@@ -23,7 +23,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.config.from_mapping(
         SECRET_KEY='dev',
-        UPLOAD_FOLDER="/tmp",
+        UPLOAD_FOLDER="/tmp/ntm-profiler",
         THREADS=4,
         RUN_SUBMISSION="local",
         APP_ROOT=os.path.dirname(os.path.abspath(__file__)),
