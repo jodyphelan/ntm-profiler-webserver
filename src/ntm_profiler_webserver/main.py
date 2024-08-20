@@ -22,8 +22,13 @@ bp = Blueprint('main', __name__)
 def get_upload_dir(upload_id):
     return os.path.join(app.config["UPLOAD_FOLDER"],upload_id)
 
-@bp.route('/')
+@bp.route('/', methods=["GET","POST"])
 def index():
+    if request.method == "POST":
+        if "sample_id" in request.form:
+            sample_id = request.form["sample_id"]
+            return redirect(url_for("main.result_id", run_id=sample_id))
+
     return render_template("pages/index.html")
 
 @bp.route('/upload', methods=["GET", "POST"])
