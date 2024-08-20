@@ -29,3 +29,5 @@ ntm_profiler_webserver/static/fastafiles/malariae.fasta
 *.bai
 *.json
 *.txt
+*.gff
+*.bcf

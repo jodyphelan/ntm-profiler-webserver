@@ -19,9 +19,6 @@
                 <button class="nav-link" id="species-tab" data-bs-toggle="tab" data-bs-target="#species-tab-pane" type="button" role="tab" aria-controls="species-tab-pane" aria-selected="false">Species</button>
               </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="clustering-tab" data-bs-toggle="tab" data-bs-target="#clustering-tab-pane" type="button" role="tab" aria-controls="clustering-tab-pane" aria-selected="false">Clustering</button>
-            </li>
-            <li class="nav-item" role="presentation">
               <button class="nav-link" id="contact-tab" data-bs-toggle="tab" data-bs-target="#contact-tab-pane" type="button" role="tab" aria-controls="contact-tab-pane" aria-selected="false">Drug resistance</button>
             </li>
             <li class="nav-item" role="presentation">
@@ -35,17 +32,56 @@
                 <div class="tab-content" id="myTabContent">
                     <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
                         <div>Run ID: {{ run_id }}</div>
-                        <div>Species: {{ data['species'] }}</div>
+                        <div>
+                            Species: {{ data['species'] }}
+                            {% if 'barcode' in results %}
+                                {{data['subspecies']}}
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="qc-tab-pane" role="tabpanel" aria-labelledby="qc-tab" tabindex="0">
                         <!-- {{results['qc']}} -->
+                        <h4>Quality control</h4>
                         {% if 'percent_reads_mapped' in results['qc'] %}
+                            <div>
+                                The quality control metrics are calculated using the reads mapped to the reference genome.
+                            </div>
                             <h4>Overview</h4>
-                            <div>Percent reads mapped: {{ results['qc']['percent_reads_mapped'] }}</div>
-                            <div>Number of reads mapped: {{ results['qc']['num_reads_mapped'] }}</div>
-                            <div>Median depth: {{ results['qc']['target_median_depth'] }}</div>
+
+
+                            <!-- create table -->
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Metric</th>
+                                        <th scope="col">Value</th>
+                                        <th scope="col">Description</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Number of reads mapped</td>
+                                        <td>{{ results['qc']['num_reads_mapped'] }}</td>
+                                        <td>Number of reads mapped to the reference genome</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Percent of reads mapped</td>
+                                        <td>{{ results['qc']['percent_reads_mapped'] }}</td>
+                                        <td>Percentage of reads mapped to the reference genome</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Median depth</td>
+                                        <td>{{ results['qc']['target_median_depth'] }}</td>
+                                        <td>Median depth of the target regions</td>
+                                </tbody>
+                            </table>
+
                             <hr>
                             <h4>Target-specific coverage</h4>
+                            <div>
+                                The target-specific coverage is calculated using the reads mapped to the reference genome.
+                                The percent depth pass is the percentage of the target covered at a depth greater than 10.
+                            </div>
                             <!-- create table for target, percent_depth_pass, median_depth  -->
                             <table class="table">
                                 <thead>
@@ -65,13 +101,40 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
-                        {% else %}                    
-                            <div>Number of reads: {{ results['qc']['num_sequences'] }}</div>
-                            <div>Number of bases: {{ results['qc']['num_bases'] }}</div>
+                        {% else %}       
+                            <div>
+                                The quality control metrics are calculated using the input reads if you have uploaded fastq files
+                                or input contigs if you have uploaded a fasta file. If you have uploaded a fasta file the number 
+                                of bases should be roughly equal to the genome size for a good assembly.
+                            </div>             
+                            <!-- create table -->
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th scope="col">Metric</th>
+                                        <th scope="col">Value</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td>Number of reads</td>
+                                        <td>{{ results['qc']['num_sequences'] }}</td>
+                                    </tr>
+                                    <tr>
+                                        <td>Number of bases</td>
+                                        <td>{{ results['qc']['num_bases'] }}</td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         {% endif %}
                     </div>
                     <div class="tab-pane fade" id="species-tab-pane" role="tabpanel" aria-labelledby="species-tab" tabindex="0">
                         <h4>Species found</h4>
+                        <div>
+                            Species assignment is performed using a kmer-based approach using the taxonomy
+                            as defined by GTDB. The closest match in the database is shown along with the average nucleotide identity (ANI).
+                            The relative abundance is calculated by normalising the abundance of species-specific kmers found.
+                        </div>
                         <!-- bootstrap table -->
                         <table id="species_table" class="table" style="width:100%">
                             <thead>
@@ -93,10 +156,11 @@
                                 {% endfor %}
                             </tbody>
                         </table>
-                    </div>
-                    <div class="tab-pane fade" id="clustering-tab-pane" role="tabpanel" aria-labelledby="clustering-tab" tabindex="0">
+                        <hr>
+
                         <!-- {{ results['barcode'] }} -->
-                        <h4>Intra-species clustering</h4>
+                        <h4>Subspecies taxonomy</h4>
+                        <div>Subspecies taxonomic placement is performed using a SNP barcode.</div>
                         {% if 'barcode' in results %}
                             <table class="table">
                                 <thead>
@@ -114,8 +178,14 @@
                                     {% endfor %}
                                 </tbody>
                             </table>
+                        {% else %}
+                            <div class="alert alert-danger" role="alert">
+                                No barcode implemented for this species.
+                            </div>
                         {% endif %}
+
                     </div>
+                    
                     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
                         <h4>
                             Overview

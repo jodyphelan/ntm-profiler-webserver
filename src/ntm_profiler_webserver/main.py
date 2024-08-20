@@ -160,7 +160,8 @@ def parse_result_summary(json_file):
     data = {}
     results = json.load(open(json_file))
     data['species'] = ", ".join([e['species'] for e in results['species']['species']])
-
+    if 'barcode' in results:
+        data['subspecies'] = ", ".join([e['id'] for e in results['barcode']])
     return data
 
 def add_linebreaks(text):
