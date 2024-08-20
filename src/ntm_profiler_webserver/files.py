@@ -29,7 +29,7 @@ class FastqSingleSample(Sample):
     r1 : str
         Path to the R1 file
     """
-    filetype='fingle-fastq'
+    filetype='single-fastq'
     def __init__(self,prefix: str,r1: str) -> None:
         self.prefix = prefix
         self.files = [r1]
