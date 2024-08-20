@@ -207,6 +207,21 @@
                     </div>
                 </div>
 
+                <div class="collapse pt-4" id="single_fastq_options_collapse">
+                    <h5>File suffix:</h5>
+                    <div class="mb-2">
+                        Read suffix. Use this option to change the default suffix of files.
+                        For example if your fastq file is named <b>sample1.fna</b>	 then your
+                        suffix should be <b>.fna</b>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div>File suffix:</div>
+                            <div><input type="text" name="single-suffix" id="single-suffix-input" placeholder=".fastq.gz"></div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="collapse pt-4" id="fasta_options_collapse">
                     <h5>File suffix:</h5>
                     <div class="mb-2">
@@ -285,6 +300,18 @@
                     $('#paried_fastq_options_collapse').collapse('show');
                 }else{
                     $('#paried_fastq_options_collapse').collapse('hide');
+                }
+            });
+
+            // if the file type is single fastq, show the suffix options. Otherwise hide them. Include a check at the start to see if single is selected.
+            if($('input[name="radio_filetype"]:checked').val() == 'single'){
+                $('#single_fastq_options_collapse').collapse('show');
+            }
+            $('input[name="radio_filetype"]').change(function(){
+                if($(this).val() == 'single'){
+                    $('#single_fastq_options_collapse').collapse('show');
+                }else{
+                    $('#single_fastq_options_collapse').collapse('hide');
                 }
             });
 
