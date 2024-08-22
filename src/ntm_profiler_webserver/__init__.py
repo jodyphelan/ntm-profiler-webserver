@@ -30,6 +30,9 @@ def create_app(test_config=None):
         RESULTS_DIR=os.path.dirname(os.path.abspath(__file__))+"/static/results",
         REFERENCE_DIR=os.path.dirname(os.path.abspath(__file__))+"/static/reference_files",
     )
+    
+    if not os.path.isdir(app.config["UPLOAD_FOLDER"]):
+        os.makedirs(app.config["UPLOAD_FOLDER"])
 
     app.config.from_mapping(
           CELERY=dict(
@@ -37,6 +40,7 @@ def create_app(test_config=None):
               result_backend=os.environ['REDIS_URL'] if 'REDIS_URL' in os.environ else 'redis://localhost:6379',
           ),
     )
+
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
