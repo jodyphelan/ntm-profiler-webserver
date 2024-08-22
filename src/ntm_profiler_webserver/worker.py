@@ -53,6 +53,10 @@ def run_task(
         sp.call(f"samtools view -bL {bed_file} {results_dir}/{run_id}.bam > {results_dir}/{run_id}.bed.bam", shell=True)
         sp.call(f"mv {results_dir}/{run_id}.bed.bam {results_dir}/{run_id}.bam", shell=True)
         sp.call(f"samtools index {results_dir}/{run_id}.bam", shell=True)
+    
+    # remove the files
+    for f in files:
+        os.remove(f)
 
     with open(f"{results_dir}/{run_id}.log","a") as LOG:
         LOG.write("\nDONE\n")
