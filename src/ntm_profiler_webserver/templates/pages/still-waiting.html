@@ -36,7 +36,7 @@
                     </div>
 
                     <div class="tab-pane fade show active" id="log-tab-pane" role="tabpanel" aria-labelledby="log-tab" tabindex="0">
-                        <pre class="log_div"><code>{{log_text|safe}}</code></pre>
+                        <pre id="log_div" class="log_div"><code>{{log_text|safe}}</code></pre>
                     </div>
                   </div>
             </div>
@@ -50,9 +50,34 @@
 
 <script>
     // auto refresh the webpage
-    setTimeout(function(){
-       window.location.reload(1);
-    }, 5000);
+    // setTimeout(function(){
+    //    window.location.reload(1);
+    // }, 5000);
+
+    // poll the server for the log /log_text
+    function poll_log() {
+        $.ajax({
+            url: "{{ url_for('main.get_log', run_id=run_id) }}",
+            type: "GET",
+            success: function(data) {
+                console.log('Polling log');
+                $(".log_div").html(data);
+                var elem = document.getElementById('log_div');
+                elem.scrollTop = elem.scrollHeight;
+                if (data.includes("DONE")) {
+                    window.location.reload(1);
+                }
+            },
+            complete: function() {
+                setTimeout(poll_log, 5000);
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        poll_log();
+    });
+
 
 </script>
 

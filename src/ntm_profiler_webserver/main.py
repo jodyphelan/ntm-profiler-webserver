@@ -119,6 +119,14 @@ file_patterns = {
     "fastq": "\.fastq.[A-Za-z]*$|\.fq.[A-Za-z]*$",
 }
 
+@bp.route('/log/<uuid:run_id>')
+def get_log(run_id):
+    log_file = "%s/%s.log" % (app.config["RESULTS_DIR"], run_id)
+    if not os.path.isfile(log_file):
+        return "No log file found"
+    log_text = add_linebreaks(open(log_file).read())
+    return log_text
+
 @bp.route('/run_result/<uuid:analysis_id>')
 def upload_runs_id(analysis_id):
     data = json.load(open("%s/%s.json" % (app.config["RESULTS_DIR"], analysis_id)))
