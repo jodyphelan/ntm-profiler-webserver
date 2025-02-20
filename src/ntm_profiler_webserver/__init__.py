@@ -36,8 +36,8 @@ def create_app(test_config=None):
 
     app.config.from_mapping(
           CELERY=dict(
-              broker_url= os.environ['REDIS_URL'] if 'REDIS_URL' in os.environ else 'redis://localhost:6379',
-              result_backend=os.environ['REDIS_URL'] if 'REDIS_URL' in os.environ else 'redis://localhost:6379',
+              broker_url= os.environ['REDIS_URL'] if 'REDIS_URL' in os.environ else 'redis://localhost:7777',
+              result_backend=os.environ['REDIS_URL'] if 'REDIS_URL' in os.environ else 'redis://localhost:7777',
           ),
     )
 
