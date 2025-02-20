@@ -16,6 +16,7 @@ import csv
 import pathogenprofiler as pp
 from .files import get_paired_fastq_samples, get_single_fasta_samples, get_single_fastq_samples
 import shutil
+import sys
 
 bp = Blueprint('main', __name__)
 
@@ -294,7 +295,9 @@ def result_id(run_id):
             return render_template('pages/species-result.html', run_id=run_id, results = results, data = data, log_text=log_text)
         else:
             db_name = results['resistance_db']['name']
-            conf = pp.get_db('ntm-profiler',db_name)
+            db_dir = f'{sys.base_prefix}/share/ntm-profiler/'
+            conf = pp.get_db(db_dir,db_name)
+
             reference = get_reference_files(conf)
             data['drug_resistance_table'] = get_drug_table(results['dr_variants'],results['dr_genes'],conf)
             files = {}
