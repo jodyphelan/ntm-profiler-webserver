@@ -281,7 +281,7 @@ def result_id(run_id):
     log_file = "%s/%s.log" % (app.config["RESULTS_DIR"], run_id)
     if not os.path.isfile(log_file):
         flash("Error! Result with ID:%s doesn't exist" % run_id, "danger")
-        return render_template('pages/result.html')
+        return redirect(url_for('main.index'))
     json_file = "%s/%s.results.json" % (app.config["RESULTS_DIR"], run_id)
     log_text = add_linebreaks(open(log_file).read())
 
@@ -300,11 +300,14 @@ def result_id(run_id):
 
             reference = get_reference_files(conf)
             data['drug_resistance_table'] = get_drug_table(results['dr_variants'],results['dr_genes'],conf)
-            files = {}
+            files = {
+                'Text report': url_for('static', filename='results/%s.results.txt' % run_id),
+                'Json report': url_for('static', filename='results/%s.results.json' % run_id),
+            }
             bam_filename = "%s/%s.bam" % (app.config["RESULTS_DIR"], run_id)
             if os.path.isfile(bam_filename):
                 files['bam'] = bam_filename
-
+            print(files)
             return render_template('pages/full-result.html', run_id=run_id, results=results, data = data, log_text=log_text,reference=reference,files=files)
 
 @bp.route('/result/<uuid:run_id>/download', methods=['GET', 'POST'])
@@ -318,7 +321,7 @@ def result():
         if "result_submit" in request.form:
             run_id = request.form["result_id"].strip()
             return redirect(url_for('main.result_id', run_id=run_id))
-    return render_template("pages/result.html")
+    return redirect(url_for('main.index'))
 
 
 
