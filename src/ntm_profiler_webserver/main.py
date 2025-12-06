@@ -194,7 +194,7 @@ def get_conf(results):
 def parse_result_summary(json_file):
     data = {}
     results = json.load(open(json_file))
-    data['species'] = ", ".join([e['species'] for e in results['species']['species']])
+    data['species'] = ", ".join([e['species'] for e in results['taxa']])
     if 'barcode' in results:
         data['subspecies'] = ", ".join([e['id'] for e in results['barcode']])
     return data
@@ -307,7 +307,10 @@ def result_id(run_id):
             bam_filename = "%s/%s.bam" % (app.config["RESULTS_DIR"], run_id)
             if os.path.isfile(bam_filename):
                 files['bam'] = bam_filename
-            print(files)
+            
+            for t in results['taxa']:
+                if 'notes' in t:
+                    t['notes'] = ". ".join(t['notes'])
             return render_template('pages/full-result.html', run_id=run_id, results=results, data = data, log_text=log_text,reference=reference,files=files)
 
 @bp.route('/result/<uuid:run_id>/download', methods=['GET', 'POST'])

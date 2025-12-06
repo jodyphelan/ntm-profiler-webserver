@@ -29,7 +29,11 @@
                 <div class="tab-content" id="myTabContent">
                     <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
                         <div>Run ID: {{ run_id }}</div>
-                        <div>Species: {{ data['species'] }}</div>
+                        {% if results['taxa']|length == 0 %}
+                            <div>Species: Not found</div>
+                        {% else %}
+                            <div>Species: {{ results['taxa'][0]['species'] }}</div>
+                        {% endif %}
                     </div>
                     <div class="tab-pane fade" id="qc-tab-pane" role="tabpanel" aria-labelledby="qc-tab" tabindex="0">
                         <!-- {{results['qc']}} -->
@@ -106,31 +110,66 @@
                             The relative abundance is calculated by normalising the abundance of species-specific kmers found.
                         </div>
                         <!-- bootstrap table -->
-                        <table id="species_table" class="table" style="width:100%">
-                            <thead>
-                                <tr>
-                                    <th>Species</th>
-                                    <th>Closest DB match</th>
-                                    <th>ANI</th>
-                                    <th>Relative abundance</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for species in results['species']['species'] %}
+                        {% if results['taxa']|length == 0 %}
+
+                            <div class="alert alert-warning m-2 p-2" role="alert">
+                                <h4>
+                                    No species found
+                                </h4>
+                                <p>
+                                    This could be due to a number of reasons including:
+                                    <ul>
+                                        <li>Not enough data to estimate species</li>
+                                        <li>Contamination which can reduce the amount of data from the NTM species</li>
+                                        <li>Your sample may contain a novel NTM</li>
+                                        <li>The input data does not contain any NTM species</li>
+                                    </ul>
+                                </p>
+                                <p>
+                                    NTM-Profiler can't reliably predict species from targeted NGS data (amplicon sequencing).
+                                    If you have used targeted sequencing, please try a different method to predict species.
+                                </p>
+
+                            </div>
+                        {% else %}
+
+                            <table id="species_table" class="table" style="width:100%">
+                                <thead>
                                     <tr>
-                                        <td>{{ species['species'] }}</td>
-                                        <td>{{ species['prediction_info']['accession'] }}</td>
-                                        <td>{{ species['prediction_info']['ani'] }}</td>
-                                        <td>{{ species['prediction_info']['relative_abundance'] }}</td>
+                                        <th>Species</th>
+                                        <th>Closest DB match</th>
+                                        <th>ANI</th>
+                                        <th>Relative abundance</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                                </thead>
+                                <tbody>
+                                    {% for t in results['taxa'] %}
+                                        <tr>
+                                            <td>{{ t['species'] }}</td>
+                                            <td>{{ t['accession'] }}</td>
+                                            <td>{{ t['ani'] }}</td>
+                                            <td>{{ t['relative_abundance'] }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        {% endif %}
                     </div>
                     <div class="tab-pane fade" id="contact-tab-pane" role="tabpanel" aria-labelledby="contact-tab" tabindex="0">
-                        <div class="alert alert-danger" role="alert">
-                            Not available for <i>{{data['species']}}</i>
-                        </div>
+                        {% if results['taxa']|length == 0 %}
+
+                            <div class="alert alert-warning m-2 p-2" role="alert">
+                                <h5>
+                                    Drug resistance not available when no species found.
+                                </h5>
+                                
+                            </div>
+                        {% else %}
+
+                            <div class="alert alert-danger" role="alert">
+                                Not available for <i>{{results['taxa'][0]['species']}}</i>
+                            </div>
+                        {% endif %}
                     </div>
                     <div class="tab-pane fade" id="log-tab-pane" role="tabpanel" aria-labelledby="log-tab" tabindex="0">
                         <pre class="log_div"><code>{{log_text|safe}}</code></pre>

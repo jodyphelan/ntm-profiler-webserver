@@ -146,15 +146,17 @@
                                     <th>Closest DB match</th>
                                     <th>ANI</th>
                                     <th>Relative abundance</th>
+                                    <th>Comments</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {% for species in results['species']['species'] %}
+                                {% for t in results['taxa'] %}
                                     <tr>
-                                        <td>{{ species['species'] }}</td>
-                                        <td>{{ species['prediction_info']['accession'] }}</td>
-                                        <td>{{ species['prediction_info']['ani'] }}</td>
-                                        <td>{{ species['prediction_info']['relative_abundance'] }}</td>
+                                        <td>{{ t['species'] }}</td>
+                                        <td>{{ t['accession'] }}</td>
+                                        <td>{{ t['ani'] }}</td>
+                                        <td>{{ t['relative_abundance'] }}</td>
+                                        <td>{{ t['notes'] }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
