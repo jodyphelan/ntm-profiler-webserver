@@ -191,9 +191,9 @@ def get_conf(results):
     conf = pp.get_db('malaria_profiler',db_name)
     return conf
 
-def parse_result_summary(json_file):
+def parse_result_summary(results):
     data = {}
-    results = json.load(open(json_file))
+
     data['species'] = ", ".join([e['species'] for e in results['taxa']])
     if 'barcode' in results:
         data['subspecies'] = ", ".join([e['id'] for e in results['barcode']])
@@ -276,6 +276,27 @@ def get_reference_files(conf):
         'gff': local_gff_file_name
     }
 
+def check_for_old_version(result_file):
+    results = json.load(open(result_file))
+    version = results['pipeline']['software_version']
+    if version.startswith("0.6"):
+        return True
+    return False
+
+def update_result_format(results):
+    # old version had 'prediction_info' nested dicts
+    new_taxa = []
+    for t in results['species']['species']:
+        new_t = {
+            'species': t['species'],
+            'accession': t['prediction_info']['accession'],
+            'ani': t['prediction_info']['ani'],
+            'relative_abundance': t['prediction_info']['relative_abundance'],
+        }
+        new_taxa.append(new_t)
+    results['taxa'] = new_taxa
+    return results
+
 @bp.route('/result/<uuid:run_id>')
 def result_id(run_id):
     log_file = "%s/%s.log" % (app.config["RESULTS_DIR"], run_id)
@@ -290,12 +311,15 @@ def result_id(run_id):
         return render_template('pages/still-waiting.html', run_id=run_id, log_text = log_text)
     else:
         results = json.load(open(json_file))
-        data = parse_result_summary(json_file)
+        if check_for_old_version(json_file):
+            results = update_result_format(results)
+        data = parse_result_summary(results)
         if results['result_type']=='Species':
             return render_template('pages/species-result.html', run_id=run_id, results = results, data = data, log_text=log_text)
         else:
             db_name = results['resistance_db']['name']
             db_dir = f'{sys.base_prefix}/share/ntm-profiler/'
+            print(db_name, db_dir)
             conf = pp.get_db(db_dir,db_name)
 
             reference = get_reference_files(conf)
