@@ -37,11 +37,11 @@ def run_task(
 
     print(filetype)
     if filetype=='fasta':
-        cmd = f"ntm-profiler profile -f {files[0]} --dir {results_dir} --prefix {run_id} --platform {platform} -t {threads} --txt " 
+        cmd = f"ntm-profiler profile --ram 4 -f {files[0]} --dir {results_dir} --prefix {run_id} --platform {platform} -t {threads} --txt " 
     elif filetype=='paired-fastq':
-        cmd = f"ntm-profiler profile -1 {files[0]} -2 {files[1]} --dir {results_dir} --prefix {run_id} --platform {platform} -t {threads} --txt " 
+        cmd = f"ntm-profiler profile --ram 4 -1 {files[0]} -2 {files[1]} --dir {results_dir} --prefix {run_id} --platform {platform} -t {threads} --txt " 
     elif filetype=='single-fastq':
-        cmd = f"ntm-profiler profile -1 {files[0]} --dir {results_dir} --prefix {run_id} --platform {platform} -t {threads} --txt " 
+        cmd = f"ntm-profiler profile --ram 4 -1 {files[0]} --dir {results_dir} --prefix {run_id} --platform {platform} -t {threads} --txt " 
     cmd += f" | tee {results_dir}/{run_id}.log"
     print(cmd)
 
