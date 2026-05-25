@@ -3,13 +3,14 @@ import os
 from uuid import uuid4
 import re
 import time
+import zipfile
 
 from flask import (
     Blueprint, flash, request, redirect, render_template, url_for, current_app, send_file, make_response, Response)
 from flask import current_app as app
 from glob import glob
 from werkzeug.utils import secure_filename # to secure file
-from .worker import run_task
+from .worker import run_collate, run_task
 import io
 import json
 import csv
@@ -17,6 +18,7 @@ import pathogenprofiler as pp
 from .files import get_paired_fastq_samples, get_single_fasta_samples, get_single_fastq_samples
 import shutil
 import sys
+from celery import chord
 
 bp = Blueprint('main', __name__)
 
@@ -87,6 +89,7 @@ def upload():
         if len(samples)==0:
             flash("No valid files found. Check and see if your file suffix is correct.","danger")
             return render_template("pages/upload.html", random_id=random_id)
+        jobs = []
         for s in samples:
             print("*"*100)
             print(s)
@@ -97,19 +100,33 @@ def upload():
             with open(log_file, "w") as O:
                 O.write("Submitting job: %s\n" % run_id)
 
-            run_task.delay(
+            jobs.append(run_task.s(
                 files=s.files, 
                 filetype=s.filetype, 
                 platform=platform,
                 run_id=run_id, 
                 results_dir=app.config["RESULTS_DIR"],
                 threads=app.config["THREADS"]
-            )
+            ))
+
+        
 
             runs.append({"id":run_id, "files":s.files})
+
         analysis_id = str(uuid4())
         with open("%s/%s.json" % (app.config["RESULTS_DIR"],analysis_id), "w") as O:
             json.dump(runs,O)
+
+        chord(
+            jobs
+        )(
+            run_collate.s(
+                run_id=analysis_id, 
+                runs=runs,
+                results_dir=app.config["RESULTS_DIR"]
+            )
+        )
+
         return redirect(url_for("main.upload_runs_id", analysis_id=analysis_id))
         
     
@@ -131,12 +148,26 @@ def get_log(run_id):
 @bp.route('/run_result/<uuid:analysis_id>')
 def upload_runs_id(analysis_id):
     data = json.load(open("%s/%s.json" % (app.config["RESULTS_DIR"], analysis_id)))
-    print(data)
+
+    collate_file = "%s/%s.collate.txt" % (app.config["RESULTS_DIR"], analysis_id)
+
+    
+    if os.path.isfile(collate_file):
+        collate_results = get_collate_results(analysis_id, app.config["RESULTS_DIR"])
+
     for d in data:
         d["link"] = '<a href="' + url_for("main.result_id", run_id=d["id"]) + '">' + d["id"] + '</a>'
         d["files"] = ", ".join([x.split("/")[-1] for x in d["files"]])
         d["status"] = get_status(d["id"])
-    return render_template('/pages/analysis_id.html', runs = data)
+        if os.path.isfile(collate_file):
+            d["species"] = collate_results[d["id"]]["species"]
+            d["closest-sequence"] = collate_results[d["id"]]["closest-sequence"]
+            d["ANI"] = collate_results[d["id"]]["ANI"]
+            d["barcode"] = collate_results[d["id"]]["barcode"]
+    print(data)
+    print(analysis_id)
+    analysis_done = True if os.path.isfile(collate_file) else False
+    return render_template('/pages/analysis_id.html', runs = data, analysis_id=analysis_id, analysis_done=analysis_done)
 
 def get_filetype(filename):
     for key,pattern in file_patterns.items():
@@ -389,3 +420,35 @@ def file_upload(upload_id):
     else:
         print(f'Chunk {current_chunk + 1} of {total_chunks} for file {file.filename} complete')
     return make_response(("Chunk upload successful", 200))
+
+
+
+def get_collate_results(run_id: str, results_dir: str):
+    data = {}
+    with open(f"{results_dir}/{run_id}.collate.txt") as O:
+        reader = csv.DictReader(O, delimiter="\t")
+        for row in reader:
+            data[row['id']] = row
+    return data
+
+@bp.route('/run_result/<uuid:analysis_id>/download_results', methods=['GET'])
+def download_results(analysis_id):
+    collate_file = "%s/%s.collate.txt" % (app.config["RESULTS_DIR"], analysis_id)
+    analysis_config = json.load(open("%s/%s.json" % (app.config["RESULTS_DIR"], analysis_id)))
+    runs_in_analysis = [r['id'] for r in analysis_config]
+    
+    # create zip file in memory
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zf:
+        for run_id in runs_in_analysis:
+            result_file = "%s/%s.results.txt" % (app.config["RESULTS_DIR"], run_id)
+            if os.path.isfile(result_file):
+                zf.write(result_file, os.path.basename(result_file))
+            
+        if os.path.isfile(collate_file):
+            zf.write(collate_file, os.path.basename(collate_file))
+    
+    memory_file.seek(0)
+
+    
+    return send_file(memory_file, as_attachment=True, download_name=f"{analysis_id}.zip", mimetype='application/zip')

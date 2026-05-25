@@ -1,4 +1,5 @@
 import os
+import tempfile
 from celery import shared_task
 from celery.result import AsyncResult
 import json
@@ -60,3 +61,16 @@ def run_task(
 
     with open(f"{results_dir}/{run_id}.log","a") as LOG:
         LOG.write("\nDONE\n")
+
+@shared_task
+def run_collate(
+        chord_results,  # Receives results from chord tasks
+        run_id: str, 
+        runs: List[dict],
+        results_dir: str, 
+    ):
+    with tempfile.NamedTemporaryFile(mode='w+', delete=True) as tmp:
+        tmp.write("\n".join([r['id'] for r in runs]))
+        tmp.flush()
+        cmd = f"ntm-profiler collate --samples {tmp.name} --dir {results_dir} --outfile {results_dir}/{run_id}.collate.txt"
+        sp.run(cmd, shell=True)

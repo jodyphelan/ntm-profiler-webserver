@@ -10,10 +10,19 @@
   </div>
 </div>
 <div class="row justify-content-center">
+  <div class="col-md-8 p-4">
+    {% if analysis_done %}
+    <button class="btn btn-primary" onclick="downloadResults();">Download All Results</button>
+    {% else %}
+    <button class="btn btn-primary" disabled>Download All Results</button>
+    {% endif %}
+  </div>
+</div>
+<div class="row justify-content-center">
     
     <div class="col-md-8">
 
-      {{ macros.generic_table(runs,{'link':'Run ID', 'files':'Files', 'status':'Status'},"Submitted runs",True) }}
+      {{ macros.generic_table(runs,{'link':'Run ID', 'files':'Files', 'status':'Status','species':'Species','closest-sequence':'Closest Sequence','ANI':'ANI','barcode':'Barcode'},"Submitted runs",True) }}
     </div>
 </div>
 
@@ -22,5 +31,9 @@
     window.setInterval(function(){
       location.reload();
     }, 5000);
-    </script>
+
+    function downloadResults() {
+        window.location.href = "{{ url_for('main.download_results', analysis_id=analysis_id) }}";
+    }
+</script>
 {% endblock %}
