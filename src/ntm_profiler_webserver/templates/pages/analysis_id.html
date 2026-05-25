@@ -27,10 +27,11 @@
 </div>
 
 <script>
-
-    window.setInterval(function(){
-      location.reload();
-    }, 5000);
+    {% if not analysis_done %}
+      window.setInterval(function(){
+        location.reload();
+      }, 5000);
+    {% endif %}
 
     function downloadResults() {
         window.location.href = "{{ url_for('main.download_results', analysis_id=analysis_id) }}";
